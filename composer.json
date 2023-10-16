@@ -1,0 +1,36 @@
+{
+    "name": "remils/event-listener",
+    "type": "library",
+    "version": "1.0.0",
+    "description": "Слушатель событий",
+    "keywords": [
+        "event",
+        "listener"
+    ],
+    "autoload": {
+        "psr-4": {
+            "Remils\\EventListener\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Sergey Zatulivetrov",
+            "email": "remils@mail.ru"
+        }
+    ],
+    "homepage": "https://github.com/remils/event-listener",
+    "license": "MIT",
+    "require": {
+        "php": "^8.1"
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "3.*",
+        "phpstan/phpstan": "^1.10"
+    },
+    "scripts": {
+        "analyse": [
+            "vendor/bin/phpcs -d memory_limit=256M --standard=PSR12 src --colors -p",
+            "vendor/bin/phpstan analyse -l 7 src"
+        ]
+    }
+}
