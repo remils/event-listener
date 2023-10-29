@@ -7,10 +7,10 @@ namespace Remils\EventListener;
 final class Dispatcher
 {
     /**
-     * @param ListenerInterface[] $listeners
+     * @param array<ListenerInterface|SubscriberInterface> $handlers
      */
     public function __construct(
-        protected array $listeners = [],
+        protected array $handlers = [],
     ) {
     }
 
@@ -20,19 +20,49 @@ final class Dispatcher
      */
     public function dispatch(EventInterface $event): void
     {
-        foreach ($this->listeners as $listener) {
-            if (!$listener instanceof ListenerInterface) {
+        foreach ($this->handlers as $handler) {
+            $isListener = is_a($handler, ListenerInterface::class);
+            $isSubscriber = is_a($handler, SubscriberInterface::class);
+
+            if (
+                $isListener === false
+                && $isSubscriber === false
+            ) {
                 throw new ListenerException(
                     message: sprintf(
-                        'Слушатель %s не реализует интерфейс %s.',
-                        $listener::class,
+                        'Класс %s должен реализовать интерфейс %s, либо %s.',
+                        $handler::class,
                         ListenerInterface::class,
+                        SubscriberInterface::class,
                     ),
                 );
             }
 
-            if ($listener->getEventNamespace() === $event::class) {
-                $listener->handle($event);
+            if (is_a($handler, AttachDispatcherInterface::class)) {
+                /**
+                 * @var AttachDispatcherInterface $handler
+                 */
+                $handler->setDispatcher($this);
+            }
+
+            if ($isListener && is_a($event, $handler->getEventNamespace())) {
+                /**
+                 * @var ListenerInterface $handler
+                 */
+                $handler->handle($event);
+            }
+
+            if ($isSubscriber) {
+                /**
+                 * @var SubscriberInterface $handler
+                 */
+                $eventNamespaces = $handler->getSubscribedEvents();
+
+                foreach ($eventNamespaces as $eventNamespace => $method) {
+                    if (is_a($event, $eventNamespace)) {
+                        call_user_func([$handler, $method], $event);
+                    }
+                }
             }
         }
     }
